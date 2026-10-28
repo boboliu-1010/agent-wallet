@@ -57,6 +57,10 @@ import {
 } from '@bankofai/agent-wallet/advanced'
 ```
 
+Custom `WalletCliClient.run` contracts use Zod 4 (`zod >=4.6.6`). When upgrading,
+migrate caller-defined `dataSchema` values to Zod 4 as well. The wallet config
+file format and default values are unchanged.
+
 wallet-cli 的選用鏈操作從獨立 subpath 匯出，而且刻意維持 **TRON-only**：
 
 ```ts
