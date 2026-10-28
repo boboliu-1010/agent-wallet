@@ -1,0 +1,97 @@
+{
+  "name": "@bankofai/agent-wallet",
+  "version": "3.0.0",
+  "description": "Universal multi-chain secure signing SDK for AI agents",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./advanced": {
+      "types": "./dist/advanced.d.ts",
+      "import": "./dist/advanced.js",
+      "require": "./dist/advanced.cjs"
+    },
+    "./integrations/wallet-cli": {
+      "types": "./dist/integrations/wallet-cli.d.ts",
+      "import": "./dist/integrations/wallet-cli.js",
+      "require": "./dist/integrations/wallet-cli.cjs"
+    }
+  },
+  "bin": {
+    "agent-wallet": "./dist/delivery/bin.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:cjs": "node scripts/test-cjs-entrypoints.cjs",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "tsc --noEmit && tsc --noEmit -p examples/tsconfig.json && eslint src/ examples/",
+    "format": "prettier --write src/ tests/ examples/",
+    "format:check": "prettier --check src/ tests/ examples/",
+    "prepublishOnly": "pnpm build",
+    "publish:beta": "pnpm publish --tag beta --access public",
+    "publish:latest": "pnpm publish --access public"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "license": "MIT",
+  "author": "BankOfAI <gummy780j@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BofAI/agent-wallet",
+    "directory": "packages/typescript"
+  },
+  "homepage": "https://github.com/BofAI/agent-wallet/tree/main/packages/typescript",
+  "bugs": "https://github.com/BofAI/agent-wallet/issues",
+  "keywords": [
+    "wallet",
+    "signing",
+    "blockchain",
+    "evm",
+    "tron",
+    "agent",
+    "mcp",
+    "eip712"
+  ],
+  "engines": {
+    "node": "^22.23.4 || ^24.22.1 || >=26.12.1"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^7.10.1",
+    "@noble/curves": "^1.9.1",
+    "bs58check": "^4.0.0",
+    "viem": "^2.0.0",
+    "zod": "^3.22.0"
+  },
+  "peerDependencies": {
+    "@tron-walletcli/wallet-cli": ">=4.13.0 <5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@tron-walletcli/wallet-cli": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^20.0.0",
+    "@vitest/coverage-v8": "^2.1.9",
+    "eslint": "^10.0.3",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.1",
+    "tronweb": "^6.2.2",
+    "tsup": "^8.5.1",
+    "typescript": "^5.3.0",
+    "typescript-eslint": "^8.57.0",
+    "vitest": "^2.0.0"
+  }
+}

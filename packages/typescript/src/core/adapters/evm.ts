@@ -1,0 +1,66 @@
+import { privateKeyToAccount } from 'viem/accounts'
+import type {
+  Eip712Capable,
+  EvmSignedTransactionArtifact,
+  SignOptions,
+  TransactionPayload,
+  Wallet,
+} from '../base.js'
+import { SigningError } from '../errors.js'
+import { Network } from '../base.js'
+import { assertNetworkFamily } from '../utils/network.js'
+
+export class EvmSigner implements Wallet, Eip712Capable {
+  private readonly account: ReturnType<typeof privateKeyToAccount>
+  private readonly network: string
+
+  constructor(privateKey: Uint8Array, network: string = 'eip155:1') {
+    assertNetworkFamily(network, Network.EVM)
+    const hex = `0x${Buffer.from(privateKey).toString('hex')}` as `0x${string}`
+    this.account = privateKeyToAccount(hex)
+    this.network = network
+  }
+
+  async getAddress(): Promise<string> {
+    return this.account.address
+  }
+
+  async signTransaction(
+    payload: TransactionPayload,
+    _options?: SignOptions,
+  ): Promise<EvmSignedTransactionArtifact> {
+    try {
+      const sig = await this.account.signTransaction(
+        payload as Parameters<typeof this.account.signTransaction>[0],
+      )
+      return { family: 'evm', rawTransaction: sig.slice(2) }
+    } catch (e) {
+      throw new SigningError(`EVM sign_transaction failed: ${e}`)
+    }
+  }
+
+  async signTypedData(data: Record<string, unknown>, _options?: SignOptions): Promise<string> {
+    try {
+      const { domain, types, primaryType, message } = data as {
+        domain: Record<string, unknown>
+        types: Record<string, Array<{ name: string; type: string }>>
+        primaryType: string
+        message: Record<string, unknown>
+      }
+
+      // Remove EIP712Domain from types — viem adds it automatically
+      const { EIP712Domain: _domain, ...messageTypes } = types
+      type SignTypedDataInput = Parameters<typeof this.account.signTypedData>[0]
+
+      const sig = await this.account.signTypedData({
+        domain: domain as SignTypedDataInput['domain'],
+        types: messageTypes as SignTypedDataInput['types'],
+        primaryType,
+        message: message as SignTypedDataInput['message'],
+      })
+      return sig.slice(2)
+    } catch (e) {
+      throw new SigningError(`EVM sign_typed_data failed: ${e}`)
+    }
+  }
+}

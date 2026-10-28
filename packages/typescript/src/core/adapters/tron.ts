@@ -1,0 +1,134 @@
+import { privateKeyToAccount } from 'viem/accounts'
+import { secp256k1 } from '@noble/curves/secp256k1'
+import bs58checkModule from 'bs58check'
+import { createHash } from 'node:crypto'
+
+// Normalize CJS/ESM interop: bs58check v4 exports differ between CJS and ESM,
+// and tsup's __toESM() wrapper can add an extra .default layer in CJS bundles.
+type Bs58checkLike = {
+  encode?: (input: Uint8Array) => string
+  default?: typeof bs58checkModule
+}
+
+const bs58checkInterop = bs58checkModule as Bs58checkLike
+const bs58check: typeof bs58checkModule =
+  typeof bs58checkInterop.encode === 'function'
+    ? bs58checkModule
+    : (bs58checkInterop.default ?? bs58checkModule)
+
+import type {
+  Eip712Capable,
+  SignOptions,
+  TransactionPayload,
+  TronSignedTransactionArtifact,
+  Wallet,
+} from '../base.js'
+import { SigningError } from '../errors.js'
+import { stripHexPrefix } from '../utils/hex.js'
+import { Network } from '../base.js'
+import { assertNetworkFamily } from '../utils/network.js'
+
+export class TronSigner implements Wallet, Eip712Capable {
+  private readonly privateKeyBytes: Uint8Array
+  private readonly address: string
+  private readonly network: string
+
+  constructor(privateKey: Uint8Array, network: string = 'tron:728126428') {
+    assertNetworkFamily(network, Network.TRON)
+    this.privateKeyBytes = privateKey
+    this.network = network
+
+    // Derive Tron address: 0x41 + ethAddress (without 0x prefix)
+    const hex = `0x${Buffer.from(privateKey).toString('hex')}` as `0x${string}`
+    const account = privateKeyToAccount(hex)
+    const ethAddrBytes = Buffer.from(account.address.slice(2), 'hex') // 20 bytes
+    const tronAddrBytes = Buffer.concat([Buffer.from([0x41]), ethAddrBytes])
+    this.address = bs58check.encode(tronAddrBytes)
+  }
+
+  async getAddress(): Promise<string> {
+    return this.address
+  }
+
+  /**
+   * Sign a pre-built unsigned transaction from TronGrid.
+   *
+   * Accepts an unsigned tx object with { raw_data_hex } and optional txID/raw_data.
+   * If txID is missing, compute SHA256(raw_data_hex) locally.
+   * Sign the txID directly with secp256k1 and return the signed tx with signature attached.
+   */
+  async signTransaction(
+    payload: TransactionPayload,
+    _options?: SignOptions,
+  ): Promise<TronSignedTransactionArtifact> {
+    try {
+      if (!payload.raw_data_hex) {
+        throw new Error(
+          'Payload must be an unsigned transaction with {raw_data_hex}. ' +
+            'Use TronGrid API to build the transaction first.',
+        )
+      }
+      const rawDataHex = stripHexPrefix(payload.raw_data_hex as string)
+      const txId = typeof payload.txID === 'string' ? stripHexPrefix(payload.txID) : ''
+      const txIdHex = txId ? validateTxId(txId) : sha256Hex(rawDataHex)
+      const txIdBytes = Buffer.from(txIdHex, 'hex')
+      const signature = this.signDigest(txIdBytes)
+      const signedTx = { ...payload, txID: txIdHex, signature: [signature] }
+      return { family: 'tron', transaction: signedTx }
+    } catch (e) {
+      if (e instanceof SigningError) throw e
+      throw new SigningError(`Tron sign_transaction failed: ${e}`)
+    }
+  }
+
+  async signTypedData(data: Record<string, unknown>, _options?: SignOptions): Promise<string> {
+    try {
+      // Tron uses same secp256k1 as EVM for EIP-712 signing
+      const hex = `0x${Buffer.from(this.privateKeyBytes).toString('hex')}` as `0x${string}`
+      const account = privateKeyToAccount(hex)
+
+      const { domain, types, primaryType, message } = data as {
+        domain: Record<string, unknown>
+        types: Record<string, Array<{ name: string; type: string }>>
+        primaryType: string
+        message: Record<string, unknown>
+      }
+
+      const { EIP712Domain: _domain, ...messageTypes } = types
+      type SignTypedDataInput = Parameters<typeof account.signTypedData>[0]
+
+      const sig = await account.signTypedData({
+        domain: domain as SignTypedDataInput['domain'],
+        types: messageTypes as SignTypedDataInput['types'],
+        primaryType,
+        message: message as SignTypedDataInput['message'],
+      })
+      return sig.slice(2)
+    } catch (e) {
+      throw new SigningError(`Tron sign_typed_data failed: ${e}`)
+    }
+  }
+
+  /**
+   * Sign a pre-hashed 32-byte digest directly with secp256k1.
+   * Used for transaction signing where the txID (SHA256 hash) is already computed.
+   */
+  private signDigest(digest: Uint8Array): string {
+    const sig = secp256k1.sign(digest, this.privateKeyBytes)
+    const r = sig.r.toString(16).padStart(64, '0')
+    const s = sig.s.toString(16).padStart(64, '0')
+    const v = (sig.recovery + 27).toString(16).padStart(2, '0')
+    return r + s + v
+  }
+}
+
+function sha256Hex(hex: string): string {
+  return createHash('sha256').update(Buffer.from(hex, 'hex')).digest('hex')
+}
+
+function validateTxId(txId: string): string {
+  if (!/^[0-9a-fA-F]{64}$/.test(txId)) {
+    throw new Error('Payload txID must be a 32-byte hex string')
+  }
+  return txId
+}

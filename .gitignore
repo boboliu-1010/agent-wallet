@@ -1,13 +1,34 @@
-# Python
-__pycache__/
-*.py[cod]
-*.so
-.venv/
-.env
+# Build output
+dist/
+build/
 
 # TypeScript
 node_modules/
-dist/
-coverage/
-npm-debug.log
+*.js.map
+*.d.ts
+!*.config.d.ts
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Secrets (NEVER commit)
+secrets/
+*.keystore
+
+# OS
 .DS_Store
+Thumbs.db
+
+# private
+.private
+
+# claude
+.claude/
+
+# codex
+.codex/
+
+# pnpm local store
+.pnpm-store/

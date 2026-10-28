@@ -1,7 +1,0 @@
-.keystore.json
-.keystore*.json
-__pycache__/
-*.pyc
-.venv/
-dist/
-*.egg-info/
