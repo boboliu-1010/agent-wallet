@@ -50,6 +50,7 @@ try {
     }),
   )
   run([pnpmCli, 'install', '--ignore-scripts', '--no-frozen-lockfile'])
+  run([pnpmCli, 'audit', '--prod'])
   run([
     join(directory, 'node_modules/typescript/bin/tsc'),
     '-p',
