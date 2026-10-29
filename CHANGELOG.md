@@ -5,7 +5,7 @@
 
 ## [Unreleased]
 
-## [4.0.0-beta.1] - 2026-10-29
+## [3.1.0-beta.1] - 2026-10-29
 
 ### Breaking changes
 
@@ -23,6 +23,10 @@
   close-reason memory disclosure.
 - Resolve matching ESM and CommonJS declarations for every public entry point.
 - Reject oversized bounded schema collections before validating child elements.
+
+## [4.0.0-beta.1] - 2026-10-29
+
+- Deprecated prerelease. Use `3.1.0-beta.1` for the Zod 4 and WebSocket security updates.
 
 ## [3.0.0] - 2026-09-10
 
