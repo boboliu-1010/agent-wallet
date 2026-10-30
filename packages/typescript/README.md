@@ -5,13 +5,12 @@
 
 Universal multi-chain signing SDK for AI agents — TypeScript implementation.
 
-> **Current release:** `3.0.0`. This is a breaking upgrade from 2.x; review the
+> **Current release:** `3.1.0`. This is a breaking upgrade from 2.x; review the
 > [3.0 migration guide](https://github.com/BofAI/agent-wallet/blob/main/doc/migration-v3.md)
 > before upgrading.
 
-> **Beta preview:** `3.1.0-beta.1` adds native Zod 4 support and patched WebSocket
-> dependencies. Custom `WalletCliClient.run` schemas must use Zod `>=4.6.6`.
-> Install with `npm install @bankofai/agent-wallet@beta`.
+> **3.1 升級提醒：**已升級至原生 Zod 4，並更新 WebSocket 安全修補依賴。
+> 自訂 `WalletCliClient.run` schema 也必須使用 Zod `>=4.6.6`。
 
 從 2.x 升級請先閱讀
 [3.0 遷移指南](https://github.com/BofAI/agent-wallet/blob/main/doc/migration-v3.md)與

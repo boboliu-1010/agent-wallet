@@ -5,6 +5,15 @@
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-10-30
+
+### Changed
+
+- 將 `3.1.0-beta.1` 的 Zod 4、WebSocket 安全修補與 ESM/CJS 型別修正納入正式版。
+- 自訂 `WalletCliClient.run` 的 `dataSchema` 必須使用 Zod `>=4.6.6`；
+  錢包設定格式與預設值維持不變。
+- Node.js 需求為 `^22.23.4 || ^24.22.1 || >=26.12.1`。
+
 ## [3.1.0-beta.1] - 2026-10-29
 
 ### Breaking changes
